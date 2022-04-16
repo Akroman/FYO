@@ -48,19 +48,26 @@ const ioRotationMesh = ioRotation.getMesh();
 ioSystem.add(ioRotationMesh);
 
 // NOTE: Add solar system mesh GUI.
-const solarSystemGui = gui.addFolder("solar system");
+const visualisationInfo = {
+    speed: 1
+};
+const visualisationGui = gui.addFolder("Visualisation");
+visualisationGui.add(visualisationInfo, 'speed', 0.1, 5);
+visualisationGui.open();
 
-const rayCaster = new THREE.Raycaster()
-const distanceDecrement = 1.2
+const rayCaster = new THREE.Raycaster();
+let distanceDecrement = 3;
 let distanceAcc = distanceDecrement;
 
 // NOTE: Animate solar system at 60fps.
 const EARTH_YEAR = 2 * Math.PI * (1 / 60) * (1 / 60);
 const animate = () => {
-    sunMesh.rotation.y += 0.001;
-    earthSystem.rotation.y += EARTH_YEAR;
-    jupiterSystem.rotation.y += EARTH_YEAR * 0.083;
-    ioSystem.rotation.y += EARTH_YEAR * 5;
+    distanceDecrement = 3 * visualisationInfo.speed;
+
+    sunMesh.rotation.y += 0.001 * visualisationInfo.speed;
+    earthSystem.rotation.y += EARTH_YEAR * visualisationInfo.speed;
+    jupiterSystem.rotation.y += EARTH_YEAR * 0.083 * visualisationInfo.speed;
+    ioSystem.rotation.y += EARTH_YEAR * 5 * visualisationInfo.speed;
 
     const ioPosition = new THREE.Vector3();
     ioMesh.getWorldPosition(ioPosition);
@@ -75,10 +82,18 @@ const animate = () => {
     const distanceToEarth = ioPosition.distanceTo(earthPosition)
     let lineDistance = ioPosition.distanceTo(earthPosition);
     lineDistance -= distanceAcc;
-    if (intersects.length && lineDistance > 0) {
-        distanceAcc += distanceDecrement;
-    } else if (lineDistance < distanceToEarth) {
-        distanceAcc -= distanceDecrement;
+    if (intersects.length) {
+        if (lineDistance - distanceDecrement > 0) {
+            distanceAcc += distanceDecrement;
+        } else {
+            lineDistance = 0;
+        }
+    } else {
+        if (lineDistance + distanceDecrement < distanceToEarth) {
+            distanceAcc -= distanceDecrement;
+        } else {
+            lineDistance = distanceToEarth;
+        }
     }
 
     const lineEnd = earthPosition;
@@ -96,6 +111,6 @@ const animate = () => {
         lineGeom.dispose();
         lineMat.dispose();
         test.scene.remove(line);
-    }, 50);
+    }, 40);
 };
 animate();
